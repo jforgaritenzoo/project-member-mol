@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Table</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Data Table</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Job Name</th>
+                <th>Date Running</th>
+                <th>Time Running</th>
+                <th>Message</th>
+                <th>Rows Fetched</th>
+                <th>Rows Inserted</th>
+                <th>Runtime</th>
+                <th>Flag</th>
+                <th>ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data %}
+            <tr>
+                <td>{{ item.job_name }}</td>
+                <td>{{ item.date_running }}</td>
+                <td>{{ item.time_running }}</td>
+                <td>{{ item.message }}</td>
+                <td>{{ item.rows_fetched }}</td>
+                <td>{{ item.rows_inserted }}</td>
+                <td>{{ item.runtime }}</td>
+                <td>{{ item.flag }}</td>
+                <td>{{ item.id }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9">No data available</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

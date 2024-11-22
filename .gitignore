@@ -1,0 +1,17 @@
+# Ignore Config Folder
+.config
+
+# ignore virtual env
+venv/
+
+file/
+
+# Ignore Python bytecode
+*.pyc
+__pycache__/
+
+# Ignore IDE files
+.vscode/
+
+# Ignore logs
+*.log
