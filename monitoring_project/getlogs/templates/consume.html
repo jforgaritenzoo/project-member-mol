@@ -1,0 +1,77 @@
+{% extends 'base_template.html' %}
+
+{% block title %}
+  Consume RMQ
+{% endblock %}
+
+{% block content %}
+  <h1>RMQ Consume</h1>
+  <p>Available Consumer :</p>
+
+  <li>
+    <strong>Local - sim_mol :</strong>
+    <button id="startConsumerBtn" onclick="startConsumer()" data-queue-name="sim_mol">Start Consumer</button>
+  </li>
+  <li>
+    <strong>Local - celery :</strong>
+    <button id="startConsumerBtn" data-queue-name="celery">Start Consumer</button>
+  </li>
+
+  <p>Results :</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Queue Name</th>
+        <th>Payload</th>
+        <th>Received At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in results %}
+        <tr>
+          <td>{{ result.queue_name }}</td>
+          <td>{{ result.payload }}</td>
+          <td>{{ result.created_at }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="9">No data available</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+
+{% block script %}
+  <script>
+    function startConsumer() {
+      const queueName = event.target.getAttribute('data-queue-name')
+      if (!queueName) {
+        alert('Queue name is required!')
+        return
+      }
+    
+      alert(`Starting consumer for queue: ${queueName}`)
+    
+      fetch('/start-consumer/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `queue_name=${queueName}`
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.error) {
+            alert(`Error: ${data.error}`)
+          } else {
+            alert(data.status)
+          }
+        })
+        .catch((error) => {
+          console.error('Error:', error)
+          alert('An error occurred while starting the consumer.')
+        })
+    }
+  </script>
+{% endblock %}

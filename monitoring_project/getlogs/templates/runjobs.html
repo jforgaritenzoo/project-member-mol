@@ -1,0 +1,65 @@
+{% extends 'base_template.html' %}
+
+{% block title %}
+  Run Jobs
+{% endblock %}
+
+{% block content %}
+  <h1>Jobs Running</h1>
+  <p>Available Jobs (Click to run):</p>
+
+  <li>
+    <strong>Products :</strong>
+    <button id="runScriptBtn" data-jobname="product">Run Products Job</button>
+  </li>
+  <li>
+    <strong>Stocks</strong>
+    <button id="runScriptBtn" data-jobname="stocks">Run Test Job</button>
+  </li>
+  <li>
+    <strong>Product View</strong>
+    <button id="runScriptBtn" data-jobname="prodview">Run Test Job</button>
+  </li>
+  <li>
+    <strong>Test</strong>
+    <button id="runScriptBtn" data-jobname="test">Run Test Job</button>
+  </li>
+{% endblock %}
+{% block script %}
+  <script>
+    // Function to trigger the API request
+    document.querySelectorAll('#runScriptBtn').forEach((button) => {
+      button.addEventListener('click', async function () {
+        const jobName = this.getAttribute('data-jobname')
+    
+        // Show a loading message or indication
+        alert(`Running ${jobName} script...`)
+    
+        // Send POST request to FastAPI using form-data
+        try {
+          const response = await fetch('http://127.0.0.1:8000/runscript', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `job_name=${jobName}` // Send the job_name as form-data
+          })
+    
+          // Parse the response
+          const data = await response.json()
+    
+          if (response.ok) {
+            // Success - show the result
+            alert(data.message)
+          } else {
+            // Error - show the error message
+            alert(`Error: ${data.detail || 'Something went wrong!'}`)
+          }
+        } catch (error) {
+          console.error('Error:', error)
+          alert('An error occurred while running the script.')
+        }
+      })
+    })
+  </script>
+{% endblock %}

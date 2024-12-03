@@ -3,6 +3,10 @@ from datetime import date, time, datetime
 from typing import List, Optional
 
 
+class ScriptRequest(BaseModel):
+    job_name: str
+
+
 class LogBase(BaseModel):
     job_name: Optional[str]
     date_running: date

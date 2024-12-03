@@ -1,3 +1,4 @@
+import json
 from timeit import default_timer as timer
 from datetime import datetime
 from time import sleep
@@ -26,14 +27,14 @@ with open(f"queries/{query_table_name}.sql", "r") as query_file:
 
 # *SCRIPT EXECUTION
 
-table_name = query_table_name
-print(f"Script for PushPull{table_name} is running at : {fulldate} !")
+table_name = "product_views_3"
+print(f"Script for PushPull {table_name} is running at : {fulldate} !")
 
 sleep_time = 2
 num_retries = 1
 for x in range(0, num_retries):
     try:
-        # klik_conn = get_klik_conn()
+        klik_conn = get_klik_conn()
         app_conn = get_app_conn()
         crm_conn = get_crm_conn()
         local_conn = get_local_conn()
@@ -43,6 +44,7 @@ for x in range(0, num_retries):
         # data = extract(crm_conn, query, table_name, chunksize=32500)  # Extracting data
         if data.empty:
             monitor(app_conn, 0, table_name)
+            print(json.dumps({"status": "error", "message": "No data found"}))
             break
         new_trunc_table(local_conn, table_name)
         load(local_conn, data, table_name, 1500)
@@ -51,6 +53,7 @@ for x in range(0, num_retries):
         total_time = round(stop - start, 2)
         print(f"Total time for code run: {total_time} s")
 
+        print(json.dumps({"status": "success", "message": "Script run successfully"}))
         monitor(app_conn, total_time, table_name)
 
         str_error = None
@@ -58,11 +61,13 @@ for x in range(0, num_retries):
     except Exception as e:
         monitor(app_conn, 0, table_name)
         str_error = str(e)
+        print(json.dumps({"status": "error", "message": str_error}))
         print(str_error)
 
     except KeyboardInterrupt:
         monitor(app_conn, 0, table_name, intr=True)
         str_error = None
+        print(json.dumps({"status": "error", "message": "process stopped by user"}))
         print("Process Stopped!")
 
     if str_error:

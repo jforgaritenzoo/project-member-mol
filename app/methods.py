@@ -68,7 +68,7 @@ def total_rows(engine: Connection, tablename: str, before=True) -> str:
 
 def total_rownum(engine: Connection, tablename: str) -> int:
     try:
-        target = pd.read_sql(f"SELECT COUNT * as Total FROM {tablename}", engine)
+        target = pd.read_sql(f"SELECT COUNT(*) as Total FROM {tablename}", engine)
         count_target = int(target["Total"].to_string(index=False))
         log.flag = 1
     except Exception as e:
@@ -120,11 +120,11 @@ def extract(
         source = pd.concat(all_data, ignore_index=True)
 
         # Backup csv
-        if local:
-            file_name = f"file/{yearmmdd}-{tablename}-extract-backup.csv"
-        else:
-            file_name = f"file/{yearmmdd}-{tablename}-extract-klik-backup.csv"
-        source.to_csv(file_name, index=False)
+        # if local:
+        #     file_name = f"file/{yearmmdd}-{tablename}-extract-backup.csv"
+        # else:
+        #     file_name = f"file/{yearmmdd}-{tablename}-extract-klik-backup.csv"
+        # source.to_csv(file_name, index=False)
 
         count_source = len(source)
         log.extracted = count_source
@@ -182,11 +182,11 @@ def new_extract(
         log.flag = 1
 
         # Backup csv
-        if local:
-            file_name = f"file/{yearmmdd}-{tablename}-extract-backup.csv"
-        else:
-            file_name = f"file/{yearmmdd}-{tablename}-extract-klik-backup.csv"
-        big_df.to_csv(file_name, index=False)
+        # if local:
+        #     file_name = f"file/{yearmmdd}-{tablename}-extract-backup.csv"
+        # else:
+        #     file_name = f"file/{yearmmdd}-{tablename}-extract-klik-backup.csv"
+        # big_df.to_csv(file_name, index=False)
 
         count_source = len(big_df)
         log.extracted = count_source
@@ -272,7 +272,6 @@ def load_klik(
 
     conn.commit()
 
-
 # LOADING DATA for TESTING
 def load(
     connection: Connection, df: pd.DataFrame, tablename: str, chunksize=500
@@ -292,8 +291,8 @@ def load(
             session.commit()
             log.flag = 1
 
-            # log.inserted = total_rownum(connection, tablename)
-            # print(f"Total data after inserted : {total_rownum(connection, tablename):,} rows")
+            log.inserted = total_rownum(connection, tablename)
+            print(f"Total data after inserted : {total_rownum(connection, tablename):,} rows")
 
         except Exception as e:
 
@@ -385,7 +384,6 @@ def monitor(conn: Connection, time: Float, table_name: str, intr=False):
         print(f"Error during monitoring: {e}")
         raise
 
-
 # RABBIT MQ PUBLISH & CONSUME
 def create_connection_with_url(url):
     """
@@ -403,7 +401,6 @@ def create_connection_with_url(url):
             time.sleep(5)
     logging.error("Unable to connect after retries. Exiting.")
     raise SystemExit(1)
-
 
 def send_message(
     channel, message, exchange_type, exchange_name="default", routing_key="sim_test"
@@ -430,7 +427,6 @@ def send_message(
     except Exception as e:
         logging.error(f"Error sending message: {e}")
 
-
 def callback(ch, method, properties, body):
     """
     Callback function for processing messages.
@@ -445,7 +441,6 @@ def callback(ch, method, properties, body):
         ch.basic_nack(
             delivery_tag=method.delivery_tag
         )  # Negative acknowledgment if failed
-
 
 def process_message(msg):
     """
@@ -463,13 +458,49 @@ def process_message(msg):
     logging.info("User processing finished.")
     return
 
-
 def consume_api():
-    """Consume one message from the RabbitMQ queue."""
     host = os.getenv("RMQ_KLIK_HOST")
     user = os.getenv("RMQ_KLIK_USER")
     password = os.getenv("RMQ_KLIK_PASS")
     vhost = os.getenv("RMQ_KLIK_VHOST")
+    port = 5672
+
+    # Create credentials and connection parameters
+    creds = pika.PlainCredentials(user, password)
+    params = pika.ConnectionParameters(
+        host=host,
+        port=port,
+        virtual_host=vhost,
+        credentials=creds,
+        socket_timeout=60,
+    )
+        
+    connection = pika.BlockingConnection(params)  # Connect to RabbitMQ
+    channel = connection.channel()  # Start a channel
+
+    # Declare the queue (if it doesn't exist already)
+    channel.queue_declare(queue="sim_mol", durable=True)
+
+    messages = []
+    while True:
+        method_frame, properties, body = channel.basic_get(
+            queue="sim_mol", auto_ack=True
+        )
+
+        if method_frame:  # A message was retrieved
+            logging.info(f"Message received: {body}")
+            messages.append(body.decode("utf-8"))
+        else:  # No more messages in the queue
+            break
+
+    connection.close()
+    return messages
+
+def consume_api_local():
+    host = os.getenv("RMQ_HOST")
+    user = os.getenv("RMQ_USER")
+    password = os.getenv("RMQ_PASS")
+    vhost = os.getenv("RMQ_VHOST")
     port = 5672
 
     # Create credentials and connection parameters
